@@ -8,3 +8,5 @@ A work-in-progress static site generator to rule all static site generators. Pro
 - [ ] Implement parser
 - [ ] Implement compiler
 - [ ] Implement templating data DSL
+- [ ] Create documentation
+- [ ] Create website
