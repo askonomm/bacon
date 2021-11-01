@@ -1,7 +1,8 @@
 # Bacon
 
 A work-in-progress static site generator to rule all static site generators.
-Probably. Intended to replace [Babe](https://github.com/askonomm/babe) upon completion.
+Probably. Intended to replace [Babe](https://github.com/askonomm/babe) upon
+completion.
 
 ## To-do
 

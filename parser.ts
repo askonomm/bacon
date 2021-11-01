@@ -67,8 +67,8 @@ function entry(contents: string): string {
 }
 
 /**
- * Takes in an array of ScannedFile's which it then attempts to 
- * turn into an array of ContentItem's. 
+ * Takes in an array of ScannedFile's which it then attempts to
+ * turn into an array of ContentItem's.
  */
 export default function parser(
   files: ScannedFile[],
