@@ -1,1 +1,1 @@
-export { marky } from 'https://deno.land/x/marky/mod.ts';
+export { marky } from "https://deno.land/x/marky@v1.0.3/mod.ts";
