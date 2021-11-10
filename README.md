@@ -8,10 +8,9 @@ completion.
 
 - [x] Implement scanner
 - [x] Implement parser
-- [ ] Implement templating
-- [ ] Implement compiler
+- [x] Implement templating
+- [x] Implement templating data DSL
 - [ ] Implement watcher
-- [ ] Implement templating data DSL
 - [ ] Create tests
 - [ ] Create documentation
 - [ ] Create website

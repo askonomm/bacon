@@ -8,6 +8,9 @@ export interface ScannedFile {
 export const ignorePatterns = {
   dotFiles: /^(?:.*\/)*(\.\w+)/,
   nonMarkdownFiles: /^\/?(?:\w+\/)*(?!.*\.md$).*/,
+  nonTemplateFiles: /^\/?(?:\w+\/)*(?!.*\.hbs$).*/,
+  layoutFiles: /.*\_layouts\/.*/,
+  partialFiles: /.*\_partials\/.*/,
 };
 
 // Patterns that are ignored by default, unless overwritten.
@@ -29,7 +32,7 @@ function ignorePath(path: string, patterns: RegExp[]): boolean {
  * `ScannedFile` objects. Optionally `ignorePatterns` can be passed,
  * containing regex patterns for file names that should be ignored.
  */
-function scanner(
+export default function scan(
   path: string,
   ignorePatterns: RegExp[] = defaultIgnorePatterns,
 ): ScannedFile[] {
@@ -65,5 +68,3 @@ function scanner(
 
   return composer(path);
 }
-
-export default scanner;

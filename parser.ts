@@ -1,11 +1,11 @@
 import { ScannedFile } from "./scanner.ts";
 import { marky } from "./deps.ts";
 
-interface ContentItemMeta {
-  [key: string]: string | Date | number | boolean;
+export interface ContentItemMeta {
+  [key: string]: string | boolean | Date;
 }
 
-interface ContentItem extends ScannedFile {
+export interface ContentItem extends ScannedFile {
   entry: string;
   meta: ContentItemMeta;
 }
@@ -31,8 +31,8 @@ function meta(contents: string): ContentItemMeta {
   // Construct meta-data
   const meta: ContentItemMeta = {};
 
-  for (const metaDataLine of metaDataLines) {
-    const pieces = metaDataLine.split(":");
+  metaDataLines.forEach((line) => {
+    const pieces = line.split(":");
 
     if (pieces.length > 1) {
       const key = pieces[0].trim();
@@ -52,7 +52,7 @@ function meta(contents: string): ContentItemMeta {
         meta[key] = value;
       }
     }
-  }
+  });
 
   return meta;
 }
@@ -70,7 +70,7 @@ function entry(contents: string): string {
  * Takes in an array of ScannedFile's which it then attempts to
  * turn into an array of ContentItem's.
  */
-export default function parser(
+export default function parse(
   files: ScannedFile[],
 ): ContentItem[] {
   return files.map((file) => {
