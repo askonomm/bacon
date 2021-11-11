@@ -1,6 +1,13 @@
 import { ensureFileSync } from "./deps.ts";
+import { baseDir } from "./main.ts";
 
-export default function write(baseDir: string, path: string, data: string) {
+/**
+ * Writes `data` to a given `path`. If the path ends with `.md`, 
+ * then it will use the file name as a directory inside of which it 
+ * will create a index.html file. If however the path ends with a 
+ * `.hbs`, then it will remove the .hbs from the name and save as-is.
+ */
+export default function write(path: string, data: string) {
   const encoder = new TextEncoder();
   const publicDir = baseDir + "/public";
 

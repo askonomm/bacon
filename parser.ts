@@ -2,7 +2,7 @@ import { ScannedFile } from "./scanner.ts";
 import { marky } from "./deps.ts";
 
 export interface ContentItemMeta {
-  [key: string]: string | boolean | Date;
+  [key: string]: string;
 }
 
 export interface ContentItem extends ScannedFile {
@@ -39,18 +39,7 @@ function meta(contents: string): ContentItemMeta {
 
       // Joining the rest by `:`, skipping the first item,
       // in case the value also contains a colon.
-      const value: string = pieces.slice(1).join(":").trim();
-
-      // Turn string booleans into actual booleans
-      if (value === "true" || value === "false") {
-        meta[key] = value === "true" ? true : false;
-      } // Turn string dates into actual dates
-      else if (value.match(/\d\d\d\d\-\d\d\-\d\d/)) {
-        meta[key] = new Date(value);
-      } // Otherwise value is as-is
-      else {
-        meta[key] = value;
-      }
+      meta[key] = pieces.slice(1).join(":").trim();
     }
   });
 

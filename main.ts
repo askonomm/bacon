@@ -6,24 +6,26 @@ import build, {
 } from "./builder.ts";
 import write from "./writer.ts";
 import helpers from "./helpers.ts";
-import { config } from "./utils.ts";
+import config from "./config.ts";
 import content, { contentFromConfiguration } from "./content.ts";
 
 // Configuration
-const baseDir = "../bien.ee";
+export const baseDir = "../bien.ee";
 const partialsDir = baseDir + "/_partials/";
 const layoutsDir = baseDir + "/_layouts/";
 const decoder = new TextDecoder("utf-8");
 
-// Compose global data
-const configuration = config(baseDir + "/babe.json");
+// Compose global data from the configuration JSON.
+// This includes static configuration, as well as dynamic,
+// DSL generated content.
+const configuration = config();
 const globalData = {
   ...configuration.static,
-  ...contentFromConfiguration(baseDir, configuration.dynamic),
+  ...contentFromConfiguration(configuration.dynamic),
 };
 
 // Compose content items
-const contentItems = content(baseDir);
+const contentItems = content();
 
 // Construct unique layouts from `contentItems` so that we'd have them done
 // in one go and wouldn't need to get them on each use of `build`.
@@ -78,7 +80,7 @@ contentItems.forEach((item) => {
     ...globalData,
   });
 
-  write(baseDir, item.relativePath, html);
+  write(item.relativePath, html);
 });
 
 // Babe isn't just a Markdown to HTML site generator, it can also
@@ -102,5 +104,5 @@ scan(baseDir, [
 
   const html = build(helpers, partials, layout, globalData);
 
-  write(baseDir, template.relativePath, html);
+  write(template.relativePath, html);
 });
