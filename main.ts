@@ -11,11 +11,15 @@ import content, { contentFromConfiguration } from "./content.ts";
 import watch from "./watcher.ts";
 
 // Configuration
-export const baseDir = "../bien.ee";
+export const baseDir = Deno.cwd();
 const partialsDir = baseDir + "/_partials/";
 const layoutsDir = baseDir + "/_layouts/";
 const decoder = new TextDecoder("utf-8");
 
+/**
+ * Puts all the pieces together to produce the final output
+ * that is the static site.
+ */
 function run(): void {
   // Compose global data from the configuration JSON.
   // This includes static configuration, as well as dynamic,
@@ -110,8 +114,8 @@ function run(): void {
   });
 }
 
-// Run!
+// We always run Babe whenever Babe is executed.
 run();
 
-// Watch?
+// Optionally, we also watch it, and run Babe continuously.
 if (Deno.args.includes("watch")) watch(run);
