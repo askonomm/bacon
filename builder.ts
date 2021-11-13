@@ -20,7 +20,7 @@ export interface TemplateData {
 }
 
 /**
- * Builds the final consumable HTML out of given Handlebars 
+ * Builds the final consumable HTML out of given Handlebars
  * `helpers`, `partials`, and a `layout`, fusing it all together with
  * the given `data`.
  */

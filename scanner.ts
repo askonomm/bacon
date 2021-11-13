@@ -11,6 +11,7 @@ export const ignorePatterns = {
   nonTemplateFiles: /^\/?(?:\w+\/)*(?!.*\.hbs$).*/,
   layoutFiles: /.*\_layouts\/.*/,
   partialFiles: /.*\_partials\/.*/,
+  publicFiles: /.*\public\/.*/,
 };
 
 // Patterns that are ignored by default, unless overwritten.
@@ -34,7 +35,7 @@ function ignorePath(path: string, patterns: RegExp[]): boolean {
  */
 export default function scan(
   path: string,
-  ignorePatterns: RegExp[] = defaultIgnorePatterns,
+  ignores: RegExp[] = defaultIgnorePatterns,
 ): ScannedFile[] {
   const composer = (innerPath: string): ScannedFile[] => {
     const files: ScannedFile[] = [];
@@ -45,9 +46,11 @@ export default function scan(
         : innerPath;
       const filePath = parsedPath + "/" + dirEntry.name;
 
-      // Does the filePath match any of the ignorePatterns?
+      ignores = ignores.concat(ignorePatterns.publicFiles);
+
+      // Does the filePath match any of the ignores?
       // If yes, we want to skip this iteration.
-      if (dirEntry.isFile && ignorePath(filePath, ignorePatterns)) continue;
+      if (dirEntry.isFile && ignorePath(filePath, ignores)) continue;
 
       // Otherwise we're good to continue composing our array.
       const stat = Deno.statSync(filePath);

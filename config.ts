@@ -1,7 +1,7 @@
 import { baseDir } from "./main.ts";
 
 export interface StaticConfiguration {
-  [key: string]: string | StaticConfiguration;
+  [key: string]: string | boolean | StaticConfiguration;
 }
 
 export interface DynamicConfigurationItem {

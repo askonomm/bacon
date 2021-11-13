@@ -28,16 +28,16 @@ export function contentFromConfiguration(
 /**
  * Calling `content()` without any arguments will return all of the
  * content items, and since config was not provided, it will never be
- * grouped, thus resulting in an array of just one type of content, 
+ * grouped, thus resulting in an array of just one type of content,
  * which is `ContentItem`.
  */
 export default function content(): ContentItem[];
 
 /**
  * However, calling `content()` with the config argument can potentially
- * also result as grouped content, if `config.groupBy` was provided, 
+ * also result as grouped content, if `config.groupBy` was provided,
  * therefore it can result in either an array of `ContentItem`, or a
- * Record containing the item it was grouped by, and it having the value 
+ * Record containing the item it was grouped by, and it having the value
  * that is an array of `ContentItem`.
  */
 export default function content(

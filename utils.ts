@@ -1,4 +1,3 @@
-
 /**
  * Groups a given `collection` by key.
  */

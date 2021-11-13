@@ -1,5 +1,6 @@
-import { marky } from "https://deno.land/x/marky@v1.1/mod.ts";
+import { marky } from "https://deno.land/x/marky@v1.1.1/mod.ts";
 import Handlebars from "https://unpkg.com/handlebars-esm";
-import { ensureFileSync } from "https://deno.land/std@0.78.0/fs/mod.ts";
+import * as std from "https://deno.land/std@0.78.0/fs/mod.ts";
+import * as testing from "https://deno.land/std/testing/asserts.ts"
 
-export { ensureFileSync, Handlebars, marky };
+export { Handlebars, marky, std, testing };
