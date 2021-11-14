@@ -1,7 +1,7 @@
 export interface ScannedFile {
   path: string;
   relativePath: string;
-  modifiedAt: Date | null;
+  modifiedAt: string;
 }
 
 // Ready-made patterns for usage.
@@ -12,6 +12,7 @@ export const ignorePatterns = {
   layoutFiles: /.*\_layouts\/.*/,
   partialFiles: /.*\_partials\/.*/,
   publicFiles: /.*\public\/.*/,
+  nonAssetFiles: /^\/?(?:\w+\/)*(?!.*\.(png|jpg|jpeg|gif|webp|css|js)$).*/,
 };
 
 // Patterns that are ignored by default, unless overwritten.
@@ -61,7 +62,7 @@ export default function scan(
         files.push({
           path: filePath,
           relativePath: filePath.replace(path, ""),
-          modifiedAt: stat.mtime,
+          modifiedAt: stat.mtime?.toString() || new Date().toString(),
         });
       }
     }

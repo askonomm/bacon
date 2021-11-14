@@ -9,6 +9,7 @@ export interface DynamicConfigurationItem {
   sortBy?: string;
   order?: "asc" | "desc";
   groupBy?: string;
+  limit?: number;
 }
 
 export interface DynamicConfiguration {

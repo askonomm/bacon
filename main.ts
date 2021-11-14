@@ -33,10 +33,24 @@ function run(): void {
   // Compose content items
   const contentItems = content();
 
+  // Template files
+  const templates = scan(baseDir, [
+    ignorePatterns.nonTemplateFiles,
+    ignorePatterns.layoutFiles,
+    ignorePatterns.partialFiles,
+  ]).map((template) => {
+    const contents = Deno.readFileSync(template.path);
+
+    return {
+      relativePath: template.relativePath,
+      contents: decoder.decode(contents),
+    };
+  });
+
   // Construct unique layouts from `contentItems` so that we'd have them done
   // in one go and wouldn't need to get them on each use of `build`.
   const layouts: TemplateLayout[] = contentItems
-    .map((item) => item.meta.layout)
+    .map((item) => item.layout)
     .filter((item, index, arr) => arr.indexOf(item) === index && item)
     .concat("default")
     .map((layout) => {
@@ -51,7 +65,7 @@ function run(): void {
   // Find unique partials used in `layouts` and construct them into an array
   // of `TemplatePartial`. This way the user never has to manually register
   // Handlebars partials.
-  const partials: TemplatePartial[] = layouts
+  let partials: TemplatePartial[] = layouts
     .flatMap((item) => {
       const matches = item.contents.match(/\{\{\>(.*)\}\}/g);
 
@@ -69,15 +83,37 @@ function run(): void {
       };
     });
 
+  // Append any partials we find from `templates` that are not yet
+  // discovered in the contents of layouts used by content items.
+  const templatePartials: TemplatePartial[] = templates
+    .flatMap((item) => {
+      const matches = item.contents.match(/\{\{\>(.*)\}\}/g);
+
+      return matches?.map((match) => {
+        return match.replace("{{>", "").replace("}}", "").trim();
+      });
+    })
+    .filter((item, index, arr) => arr.indexOf(item) === index && item)
+    .filter((item) => !partials.find((partial) => partial.name === item))
+    .map((partial) => {
+      const contents = Deno.readFileSync(partialsDir + partial + ".hbs");
+
+      return {
+        name: String(partial),
+        contents: decoder.decode(contents),
+      };
+    });
+
+  partials = partials.concat(templatePartials);
+
   // Now that we have the content, layouts and partials, we can go ahead
   // and build our final HTML for each of the content items.
   contentItems.forEach((item) => {
     const data: TemplateData = {
-      ...item.meta,
-      entry: item.entry,
+      ...item,
     };
 
-    const layout = item.meta.layout
+    const layout = item.layout
       ? layouts.find((layout) => layout.name === data.layout)
       : layouts.find((layout) => layout.name === "default");
 
@@ -97,25 +133,28 @@ function run(): void {
   //
   // For example, say you have a `feed.xml.hbs` template, well, that will
   // be generated into `feed.xml`. You see the power of it now? Awesome!
-  scan(baseDir, [
-    ignorePatterns.nonTemplateFiles,
-    ignorePatterns.layoutFiles,
-    ignorePatterns.partialFiles,
-  ]).forEach((template) => {
-    const contents = Deno.readFileSync(template.path);
-
-    const layout = {
-      contents: decoder.decode(contents),
-    };
-
-    const html = build(helpers, partials, layout, globalData);
+  templates.forEach((template) => {
+    const html = build(helpers, partials, template, globalData);
 
     write(template.relativePath, html);
   });
+
+  // Move all other assets to the public directory.
+  const assets = scan(baseDir, [
+    ignorePatterns.nonAssetFiles,
+  ]);
+
+  assets.forEach((asset) => {
+    Deno.copyFileSync(asset.path, baseDir + "/public" + asset.relativePath);
+  });
 }
 
-// We always run Babe whenever Babe is executed.
-run();
-
-// Optionally, we also watch it, and run Babe continuously.
-if (Deno.args.includes("watch")) watch(run);
+// We always run Babe whenever Babe is executed,
+// but optionally, we also watch it, and run Babe continuously.
+if (Deno.args.includes("watch")) {
+  run();
+  watch(run);
+} else {
+  run();
+  Deno.exit();
+}

@@ -6,8 +6,7 @@ export interface ContentItemMeta {
 }
 
 export interface ContentItem extends ScannedFile {
-  entry: string;
-  meta: ContentItemMeta;
+  [key: string]: string;
 }
 
 /**
@@ -69,8 +68,9 @@ export default function parse(
 
     return {
       ...file,
+      ...meta(contents),
       entry: entry(contents),
-      meta: meta(contents),
+      slug: file.relativePath.replace("/", "").replace(".md", ""),
     };
   });
 }
