@@ -2,7 +2,38 @@ import parse, { ContentItem } from "./parser.ts";
 import scan, { ignorePatterns } from "./scanner.ts";
 import { DynamicConfiguration, DynamicConfigurationItem } from "./config.ts";
 import { baseDir } from "./main.ts";
-import { groupBy, GroupedContentItems } from "./utils.ts";
+
+export interface GroupedContentItems {
+  group: string;
+  items: ContentItem[];
+}
+
+function groupBy<K extends keyof ContentItem>(
+  array: ContentItem[],
+  key: K | { (obj: ContentItem): string },
+): GroupedContentItems[] {
+  const keyFn = key instanceof Function ? key : (obj: ContentItem) => obj[key];
+
+  const grouped = array.reduce((objectsByKeyValue, obj) => {
+    const value = keyFn(obj);
+
+    objectsByKeyValue[value] = (objectsByKeyValue[value] || []).concat(obj);
+
+    return objectsByKeyValue;
+  }, {} as Record<string, ContentItem[]>);
+
+  const groupedContentItems: GroupedContentItems[] = [];
+  
+  Object.entries(grouped).forEach(([key, value]) => {
+    groupedContentItems.push({
+      group: key,
+      items: value
+    });
+  });
+
+  return groupedContentItems;
+}
+
 
 export interface DynamicContent {
   [key: string]: ContentItem[] | GroupedContentItems[];

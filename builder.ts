@@ -2,7 +2,7 @@ import { Handlebars } from "./deps.ts";
 
 export interface TemplateHelper {
   name: string;
-  fn: (options: unknown) => string;
+  fn: (input: string, opts?: any) => string;
 }
 
 export interface TemplateLayout {

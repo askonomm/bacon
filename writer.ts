@@ -13,14 +13,14 @@ export default function write(path: string, data: string) {
 
   if (path.endsWith(".md")) {
     const writePath = publicDir + path.replace(".md", "") + "/index.html";
-    console.log("• Writing: " + writePath);
+    console.log("• Writing: " + writePath.replace(baseDir, ""));
     std.ensureFileSync(writePath);
     Deno.writeFileSync(writePath, encoder.encode(data));
   }
 
   if (path.endsWith(".hbs")) {
     const writePath = publicDir + path.replace(".hbs", "");
-    console.log("• Writing: " + writePath);
+    console.log("• Writing: " + writePath.replace(baseDir, ""));
     std.ensureFileSync(writePath);
     Deno.writeFileSync(writePath, encoder.encode(data));
   }
