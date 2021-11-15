@@ -106,8 +106,8 @@ function run(): void {
 
   partials = partials.concat(templatePartials);
 
-  // BUT, we're not done yet! That's because partials themselves can 
-  // also include partials, so let's get all the partials from partials, 
+  // BUT, we're not done yet! That's because partials themselves can
+  // also include partials, so let's get all the partials from partials,
   // and add them to partials. Yes, I'm aware of how this sounds.
   const partialPartials: TemplatePartial[] = partials
     .flatMap((item) => {
@@ -129,7 +129,6 @@ function run(): void {
     });
 
   partials = partials.concat(partialPartials);
-
 
   // Now that we have the content, layouts and partials, we can go ahead
   // and build our final HTML for each of the content items.

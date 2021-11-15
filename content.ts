@@ -23,17 +23,16 @@ function groupBy<K extends keyof ContentItem>(
   }, {} as Record<string, ContentItem[]>);
 
   const groupedContentItems: GroupedContentItems[] = [];
-  
+
   Object.entries(grouped).forEach(([key, value]) => {
     groupedContentItems.push({
       group: key,
-      items: value
+      items: value,
     });
   });
 
   return groupedContentItems;
 }
-
 
 export interface DynamicContent {
   [key: string]: ContentItem[] | GroupedContentItems[];

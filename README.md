@@ -1,8 +1,8 @@
 # Bacon
 
-A work-in-progress data-oriented static site generator to rule all static site generators.
-Probably. Intended to replace [Babe](https://github.com/askonomm/babe) upon
-completion.
+A work-in-progress data-oriented static site generator to rule all static site
+generators. Probably. Intended to replace
+[Babe](https://github.com/askonomm/babe) upon completion.
 
 ## To-do
 

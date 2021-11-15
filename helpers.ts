@@ -12,7 +12,7 @@ function formatDate(input: string, data: any): string {
 
 const helpers: TemplateHelper[] = [{
   name: "format_date",
-  fn: formatDate
+  fn: formatDate,
 }];
 
 export default helpers;
