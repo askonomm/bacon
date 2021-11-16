@@ -75,3 +75,50 @@ jobs:
           name: 'bacon.exe'
           path: bacon.exe
 
+      - name: Get current date
+        id: date
+        run: echo "::set-output name=date::$(date +'%Y.%m.%d')"
+
+      - name: 'Create Release'
+        id: create_release
+        uses: actions/create-release@v1
+        env:
+          GITHUB_TOKEN: ${{secrets.GITHUB_TOKEN}}
+        with:
+          tag_name: ${{steps.date.outputs.date}}
+          release_name: ${{steps.date.outputs.date}}
+          body: |
+            This release is created automatically.
+          draft: false
+          prerelease: false
+
+      - name: Upload release asset
+        id: upload-release-asset
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{secrets.GITHUB_TOKEN}}
+        with:
+          asset_path: bacon-linux
+          asset_name: bacon-linux
+          asset_content_type: application/octet-stream
+
+      - name: Upload release asset
+        id: upload-release-asset
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{secrets.GITHUB_TOKEN}}
+        with:
+          asset_path: bacon-macos
+          asset_name: bacon-macos
+          asset_content_type: application/octet-stream
+
+      - name: Upload release asset
+        id: upload-release-asset
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{secrets.GITHUB_TOKEN}}
+        with:
+          asset_path: bacon.exe
+          asset_name: bacon.exe
+          asset_content_type: application/octet-stream
+
