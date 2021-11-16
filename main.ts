@@ -173,8 +173,6 @@ function run(): void {
 
     globalData[slug] = true;
 
-    console.log(globalData);
-
     const html = build(helpers, partials, template, globalData);
 
     write(template.relativePath, html);

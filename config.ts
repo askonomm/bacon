@@ -32,17 +32,17 @@ export default function config(): Configuration {
   // Do we have a local.babe.json? Because if so, we want to read that instead.
   try {
     const contents = Deno.readFileSync(baseDir + "/local.babe.json");
-    
+
     return JSON.parse(decoder.decode(contents));
-  } catch(_) {
+  } catch (_) {
     try {
       const contents = Deno.readFileSync(baseDir + "/babe.json");
 
       return JSON.parse(decoder.decode(contents));
-    } catch(_) {
+    } catch (_) {
       return {
         static: {},
-        dynamic: {}
+        dynamic: {},
       };
     }
   }

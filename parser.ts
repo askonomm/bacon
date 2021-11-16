@@ -16,7 +16,7 @@ export interface ContentItem extends ScannedFile {
  * Dates are converted into actual Date objects and boolean strings are
  * converted into actual booleans.
  */
-function meta(contents: string): ContentItemMeta {
+function parseMeta(contents: string): ContentItemMeta {
   // Match contents for the YAML meta-data block
   const metaData = contents.match(/^\-\-\-(.*?)\-\-\-/s);
 
@@ -50,7 +50,7 @@ function meta(contents: string): ContentItemMeta {
  * tries to parse for the Markdown entry, and convert into
  * consumable HTML.
  */
-function entry(contents: string): string {
+function parseEntry(contents: string): string {
   return marky(contents.replace(/^(---).*?(---)/s, "").trim());
 }
 
@@ -65,12 +65,16 @@ export default function parse(
     const bytes = Deno.readFileSync(file.path);
     const decoder = new TextDecoder("utf-8");
     const contents: string = decoder.decode(bytes);
+    const meta = parseMeta(contents);
+    const entry = parseEntry(contents);
+    const timeToRead = Math.ceil(entry.trim().split(/\s+/).length / 225).toString();
 
     return {
       ...file,
-      ...meta(contents),
-      entry: entry(contents),
+      ...meta,
+      entry,
       slug: file.relativePath.replace("/", "").replace(".md", ""),
+      time_to_read: timeToRead,
     };
   });
 }

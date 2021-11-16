@@ -12,7 +12,7 @@ export const ignorePatterns = {
   layoutFiles: /.*\_layouts\/.*/,
   partialFiles: /.*\_partials\/.*/,
   publicFiles: /.*\public\/.*/,
-  nonAssetFiles: /^\/?(?:\w+\/)*(?!.*\.(png|jpg|jpeg|gif|webp|css|js)$).*/,
+  nonAssetFiles: /^\/?(?:\w+\/)*(?!.*\.(png|jpg|jpeg|gif|webp|css|js|svg)$).*/,
 };
 
 // Patterns that are ignored by default, unless overwritten.
