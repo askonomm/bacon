@@ -141,6 +141,13 @@ function run(): void {
       ? layouts.find((layout) => layout.name === data.layout)
       : layouts.find((layout) => layout.name === "default");
 
+    const slug = "is_" + item.relativePath
+      .replace("/", "")
+      .replaceAll("/", "_")
+      .replace(".md", "");
+
+    data[slug] = true;
+
     const html = build(helpers, partials, layout, {
       ...data,
       ...globalData,
@@ -158,6 +165,16 @@ function run(): void {
   // For example, say you have a `feed.xml.hbs` template, well, that will
   // be generated into `feed.xml`. You see the power of it now? Awesome!
   templates.forEach((template) => {
+    const slug = "is_" + template.relativePath
+      .replace("/", "")
+      .replaceAll("/", "_")
+      .replace(".hbs", "")
+      .replace(".html", "");
+
+    globalData[slug] = true;
+
+    console.log(globalData);
+
     const html = build(helpers, partials, template, globalData);
 
     write(template.relativePath, html);

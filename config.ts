@@ -1,4 +1,5 @@
 import { baseDir } from "./main.ts";
+import { std } from "./deps.ts";
 
 export interface StaticConfiguration {
   [key: string]: string | boolean | StaticConfiguration;
@@ -27,7 +28,22 @@ export interface Configuration {
  */
 export default function config(): Configuration {
   const decoder = new TextDecoder("utf-8");
-  const contents = Deno.readFileSync(baseDir + "/babe.json");
 
-  return JSON.parse(decoder.decode(contents));
+  // Do we have a local.babe.json? Because if so, we want to read that instead.
+  try {
+    const contents = Deno.readFileSync(baseDir + "/local.babe.json");
+    
+    return JSON.parse(decoder.decode(contents));
+  } catch(_) {
+    try {
+      const contents = Deno.readFileSync(baseDir + "/babe.json");
+
+      return JSON.parse(decoder.decode(contents));
+    } catch(_) {
+      return {
+        static: {},
+        dynamic: {}
+      };
+    }
+  }
 }
