@@ -1,5 +1,24 @@
 import { ScannedFile } from "./scanner.ts";
 import { marky } from "./deps.ts";
+import {
+  bold,
+  emptyBlock,
+  headingBlock,
+  horizontalLineBlock,
+  inlineCode,
+  isCodeBlock,
+  isEmptyBlock,
+  isHeadingBlock,
+  isHorizontalLineBlock,
+  isListBlock,
+  isQuoteBlock,
+  italic,
+  linkAndImage,
+  listBlock,
+  paragraphBlock,
+  quoteBlock,
+  strikethrough,
+} from "https://deno.land/x/marky@v1.1.5/parsers.ts";
 
 export interface ContentItemMeta {
   [key: string]: string;
@@ -45,13 +64,120 @@ function parseMeta(contents: string): ContentItemMeta {
   return meta;
 }
 
+function highlightClojure(code: string): string {
+  const functions = code.match(/\(([^:].*?)\s/g);
+
+  if (functions) {
+    functions.forEach((fn) => {
+      code = code.replaceAll(
+        fn,
+        `(<span class="syntax-fn">${fn.replace("(", "")}</span>`,
+      );
+    });
+  }
+
+  const keywords = code.match(/:(.*?)\s/g);
+
+  if (keywords) {
+    keywords.forEach((k) => {
+      code = code.replaceAll(k, `<span class="syntax-keyword">${k}</span>`);
+    });
+  }
+
+  return code;
+}
+
+function codeBlock(block: string): string {
+  const languageMatch = block.match(/\`\`\`\w+/);
+  const language = languageMatch
+    ? languageMatch[0].replace("```", "").trim()
+    : false;
+  let value = "";
+
+  if (language) {
+    value = block.replace(/\`\`\`\w+/, "").replace(/\n\`\`\`/, "");
+
+    // Remove first \n if the first line is empty
+    if (value.split("\n")[0].trim() === "") {
+      value = value.replace("\n", "");
+    }
+
+    // Encode
+    value = value.replace(/&/g, "&amp;");
+    value = value.replace(/</g, "&lt;");
+    value = value.replace(/>/g, "&gt;");
+
+    // Code highlight
+    if (language === "clojure") {
+      value = highlightClojure(value);
+    }
+
+    // Replace all line breaks with a `<br>` because otherwise
+    // `<pre>` thinks that lines following a \n should have a tab, which is dumb.
+    value = value.replaceAll("\n", "<br>");
+
+    return `<pre class="language-${language}"><code>${value}</code></pre>`;
+  }
+
+  return `<pre><code>${block.substring(3, block.length - 3)}</code></pre>`;
+}
+
 /**
  * Takes in a presumable Markdown file contents that it then
  * tries to parse for the Markdown entry, and convert into
  * consumable HTML.
  */
 function parseEntry(contents: string): string {
-  return marky(contents.replace(/^(---).*?(---)/s, "").trim());
+  return marky(contents.replace(/^(---).*?(---)/s, "").trim(), [
+    {
+      matcher: isEmptyBlock,
+      renderers: [emptyBlock],
+    },
+    {
+      matcher: isHeadingBlock,
+      renderers: [
+        bold,
+        italic,
+        inlineCode,
+        strikethrough,
+        linkAndImage,
+        headingBlock,
+      ],
+    },
+    {
+      matcher: isCodeBlock,
+      renderers: [codeBlock],
+    },
+    {
+      matcher: isHorizontalLineBlock,
+      renderers: [horizontalLineBlock],
+    },
+    {
+      matcher: isQuoteBlock,
+      renderers: [quoteBlock],
+    },
+    {
+      matcher: isListBlock,
+      renderers: [
+        bold,
+        italic,
+        inlineCode,
+        strikethrough,
+        linkAndImage,
+        listBlock,
+      ],
+    },
+    {
+      renderers: [
+        bold,
+        italic,
+        inlineCode,
+        strikethrough,
+        linkAndImage,
+        paragraphBlock,
+      ],
+    },
+  ]);
 }
 
 /**
@@ -67,7 +193,8 @@ export default function parse(
     const contents: string = decoder.decode(bytes);
     const meta = parseMeta(contents);
     const entry = parseEntry(contents);
-    const timeToRead = Math.ceil(entry.trim().split(/\s+/).length / 225).toString();
+    const timeToRead = Math.ceil(entry.trim().split(/\s+/).length / 225)
+      .toString();
 
     return {
       ...file,
