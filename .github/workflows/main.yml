@@ -30,6 +30,11 @@ jobs:
       - name: Compile Linux
         run: /home/runner/.deno/bin/deno compile --allow-all --unstable --target x86_64-unknown-linux-gnu main.ts
         
+      - name: Compress binary
+        uses: svenstaro/upx-action@v2
+        with:
+          file: bacon
+        
       - name: Upload
         uses: actions/upload-artifact@v2-preview
         with:
@@ -39,6 +44,11 @@ jobs:
       - name: Compile MacOS
         run: /home/runner/.deno/bin/deno compile --allow-all --unstable --target aarch64-apple-darwin main.ts
         
+      - name: Compress binary
+        uses: svenstaro/upx-action@v2
+        with:
+          file: bacon
+        
       - name: Upload
         uses: actions/upload-artifact@v2-preview
         with:
@@ -47,6 +57,11 @@ jobs:
         
       - name: Compile Windows
         run: /home/runner/.deno/bin/deno compile --allow-all --unstable --target x86_64-pc-windows-msvc main.ts
+        
+      - name: Compress binary
+        uses: svenstaro/upx-action@v2
+        with:
+          file: bacon.exe
         
       - name: Upload
         uses: actions/upload-artifact@v2-preview
