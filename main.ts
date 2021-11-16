@@ -144,7 +144,7 @@ function run(): void {
     const slug = "is_" + item.relativePath
       .replace("/", "")
       .replaceAll("/", "_")
-      .replace(".md", "");
+      .replace(/\..*/, "");
 
     data[slug] = true;
 
@@ -168,8 +168,7 @@ function run(): void {
     const slug = "is_" + template.relativePath
       .replace("/", "")
       .replaceAll("/", "_")
-      .replace(".hbs", "")
-      .replace(".html", "");
+      .replace(/\..*/, "");
 
     globalData[slug] = true;
 
