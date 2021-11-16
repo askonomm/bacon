@@ -78,18 +78,14 @@ jobs:
       - name: Folderize
         run: mkdir release && mv bacon.exe release && mv bacon-macos release && mv bacon-linux release
 
-      - name: Set version
-        id: version
-        run: echo "::set-output name=version::$(date +'%Y').${github.run_number}"
-
       - name: Create release
         id: create_release
         uses: actions/create-release@v1
         env:
           GITHUB_TOKEN: ${{secrets.GITHUB_TOKEN}}
         with:
-          tag_name: ${{steps.version.outputs.version}}
-          release_name: ${{steps.version.outputs.version}}
+          tag_name: ${{github.run_number}}
+          release_name: ${{github.run_number}}
           body: |
             This release is created automatically.
           draft: false
