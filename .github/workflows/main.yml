@@ -76,7 +76,7 @@ jobs:
           path: bacon.exe
 
       - name: Folderize
-      - run: mkdir release && mv bacon.exe release && mv bacon-macos release && mv bacon-linux release
+        run: mkdir release && mv bacon.exe release && mv bacon-macos release && mv bacon-linux release
 
       - name: Get current date
         id: date
