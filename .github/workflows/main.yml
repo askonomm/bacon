@@ -33,10 +33,10 @@ jobs:
       - name: Rename
         run: mv bacon bacon-linux
 
-      - name: Compress binary
-        uses: svenstaro/upx-action@v2
-        with:
-          file: bacon-linux
+      # - name: Compress binary
+      #   uses: svenstaro/upx-action@v2
+      #   with:
+      #     file: bacon-linux
         
       - name: Upload
         uses: actions/upload-artifact@v2-preview
@@ -80,7 +80,7 @@ jobs:
 
       - name: Get current date
         id: date
-        run: echo "::set-output name=date::$(date +'%Y.%m.%d')"
+        run: echo "::set-output name=date::$(date +'%Y%m%d%h')"
 
       - name: Create release
         id: create_release
