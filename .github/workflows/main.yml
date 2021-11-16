@@ -50,10 +50,10 @@ jobs:
       - name: Rename
         run: mv bacon bacon-macos
         
-      - name: Compress binary
-        uses: svenstaro/upx-action@v2
-        with:
-          file: bacon-macos
+      # - name: Compress binary
+      #   uses: svenstaro/upx-action@v2
+      #   with:
+      #     file: bacon-macos
         
       - name: Upload
         uses: actions/upload-artifact@v2-preview
