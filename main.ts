@@ -21,6 +21,8 @@ const decoder = new TextDecoder("utf-8");
  * that is the static site.
  */
 function run(): void {
+  console.log("Thinking ...");
+
   // Compose global data from the configuration JSON.
   // This includes static configuration, as well as dynamic,
   // DSL generated content.
@@ -133,9 +135,7 @@ function run(): void {
   // Now that we have the content, layouts and partials, we can go ahead
   // and build our final HTML for each of the content items.
   contentItems.forEach((item) => {
-    const data: TemplateData = {
-      ...item,
-    };
+    const data: TemplateData = item;
 
     const layout = item.layout
       ? layouts.find((layout) => layout.name === data.layout)
@@ -170,9 +170,11 @@ function run(): void {
       .replaceAll("/", "_")
       .replace(/\..*/, "");
 
-    globalData[slug] = true;
+    const data = {...globalData};
+    
+    data[slug] = true;
 
-    const html = build(helpers, partials, template, globalData);
+    const html = build(helpers, partials, template, data);
 
     write(template.relativePath, html);
   });
@@ -190,6 +192,7 @@ function run(): void {
 // We always run Babe whenever Babe is executed,
 // but optionally, we also watch it, and run Babe continuously.
 if (Deno.args.includes("watch")) {
+  console.log("Watching ...");
   run();
   watch(run);
 } else {

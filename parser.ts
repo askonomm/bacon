@@ -1,5 +1,5 @@
 import { ScannedFile } from "./scanner.ts";
-import { marky } from "./deps.ts";
+import { hljs, hljsClojure, marky } from "./deps.ts";
 import {
   bold,
   emptyBlock,
@@ -64,52 +64,35 @@ function parseMeta(contents: string): ContentItemMeta {
   return meta;
 }
 
-function highlightClojure(code: string): string {
-  const functions = code.match(/\(([^:].*?)\s/g);
-
-  if (functions) {
-    functions.forEach((fn) => {
-      code = code.replaceAll(
-        fn,
-        `(<span class="syntax-fn">${fn.replace("(", "")}</span>`,
-      );
-    });
-  }
-
-  const keywords = code.match(/:(.*?)\s/g);
-
-  if (keywords) {
-    keywords.forEach((k) => {
-      code = code.replaceAll(k, `<span class="syntax-keyword">${k}</span>`);
-    });
-  }
-
-  return code;
-}
-
+/**
+ * Almost an identical clone of Marky's built-in code block, except
+ * supports server-side highlighting thanks to Highlight.js. 
+ */
 function codeBlock(block: string): string {
   const languageMatch = block.match(/\`\`\`\w+/);
   const language = languageMatch
     ? languageMatch[0].replace("```", "").trim()
     : false;
-  let value = "";
+
+  let value = block.replace(/\`\`\`\w+/, "").replace(/\n\`\`\`/, "");
+
+  // Remove first \n if the first line is empty
+  if (value.split("\n")[0].trim() === "") {
+    value = value.replace("\n", "");
+  }
+
+  console.log('language', language);
 
   if (language) {
-    value = block.replace(/\`\`\`\w+/, "").replace(/\n\`\`\`/, "");
-
-    // Remove first \n if the first line is empty
-    if (value.split("\n")[0].trim() === "") {
-      value = value.replace("\n", "");
-    }
-
-    // Encode
-    value = value.replace(/&/g, "&amp;");
-    value = value.replace(/</g, "&lt;");
-    value = value.replace(/>/g, "&gt;");
-
     // Code highlight
-    if (language === "clojure") {
-      value = highlightClojure(value);
+    try {
+      hljs.registerLanguage('clojure', hljsClojure);
+
+      value = hljs.highlight(value, {
+        language
+      }).value;
+    } catch (error) {
+      console.log(error);
     }
 
     // Replace all line breaks with a `<br>` because otherwise
@@ -119,7 +102,17 @@ function codeBlock(block: string): string {
     return `<pre class="language-${language}"><code>${value}</code></pre>`;
   }
 
-  return `<pre><code>${block.substring(3, block.length - 3)}</code></pre>`;
+  // Encode
+  value = value.replace(/&/g, "&amp;");
+  value = value.replace(/</g, "&lt;");
+  value = value.replace(/>/g, "&gt;");
+
+  // Replace all line breaks with a `<br>` because otherwise
+  // `<pre>` thinks that lines following a \n should have a tab, which is dumb.
+  value = value.replace(/\`\`\`/, "").replace("\n", "");
+  value = value.replaceAll("\n", "<br>");
+
+  return `<pre><code>${value}</code></pre>`;
 }
 
 /**

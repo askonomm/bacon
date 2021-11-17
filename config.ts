@@ -1,5 +1,4 @@
 import { baseDir } from "./main.ts";
-import { std } from "./deps.ts";
 
 export interface StaticConfiguration {
   [key: string]: string | boolean | StaticConfiguration;
