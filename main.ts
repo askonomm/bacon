@@ -21,7 +21,7 @@ const decoder = new TextDecoder("utf-8");
  * that is the static site.
  */
 function run(): void {
-  console.log("Thinking ...");
+  console.log("🐷 Thinking ...");
 
   // Compose global data from the configuration JSON.
   // This includes static configuration, as well as dynamic,
@@ -192,7 +192,7 @@ function run(): void {
 // We always run Babe whenever Babe is executed,
 // but optionally, we also watch it, and run Babe continuously.
 if (Deno.args.includes("watch")) {
-  console.log("Watching ...");
+  console.log("🐷 Watching ...");
   run();
   watch(run);
 } else {

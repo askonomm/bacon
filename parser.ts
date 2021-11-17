@@ -81,8 +81,6 @@ function codeBlock(block: string): string {
     value = value.replace("\n", "");
   }
 
-  console.log('language', language);
-
   if (language) {
     // Code highlight
     try {
