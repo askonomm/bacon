@@ -185,6 +185,8 @@ export default function parse(
     const contents: string = decoder.decode(bytes);
     const meta = parseMeta(contents);
     const entry = parseEntry(contents);
+    const slugPieces = file.relativePath.split("/");
+    const slug = slugPieces[slugPieces.length - 1].replace(".md", "");
     const timeToRead = Math.ceil(entry.trim().split(/\s+/).length / 225)
       .toString();
 
@@ -192,7 +194,7 @@ export default function parse(
       ...file,
       ...meta,
       entry,
-      slug: file.relativePath.replace("/", "").replace(".md", ""),
+      slug,
       time_to_read: timeToRead,
     };
   });
