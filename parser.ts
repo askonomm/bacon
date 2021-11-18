@@ -1,6 +1,7 @@
 import { ScannedFile } from "./scanner.ts";
-import { hljs, hljsClojure, marky } from "./deps.ts";
-import {
+import { hljs, hljsClojure, marky, parsers } from "./deps.ts";
+
+const {
   bold,
   emptyBlock,
   headingBlock,
@@ -18,7 +19,7 @@ import {
   paragraphBlock,
   quoteBlock,
   strikethrough,
-} from "https://deno.land/x/marky@v1.1.5/parsers.ts";
+} = parsers;
 
 export interface ContentItemMeta {
   [key: string]: string;
