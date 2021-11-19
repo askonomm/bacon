@@ -59,7 +59,7 @@ function cardImage(context: any): string {
 
   // Background
   ctx.fillStyle = backgroundColor;
-  ctx.fillRect(0, 0, width, height);  
+  ctx.fillRect(0, 0, width, height);
 
   // Text
   ctx.fillStyle = color;
@@ -71,7 +71,14 @@ function cardImage(context: any): string {
   canvasTxt.vAlign = "middle";
   canvasTxt.lineHeight = 40;
   canvasTxt.justify = false;
-  canvasTxt.drawText(ctx, title, -(canvas.width / 2) + 200, 0, canvas.width - 200, canvas.height);
+  canvasTxt.drawText(
+    ctx,
+    title,
+    -(canvas.width / 2) + 200,
+    0,
+    canvas.width - 200,
+    canvas.height,
+  );
 
   // Be done with it
   std.ensureFileSync(writePath);
@@ -91,7 +98,7 @@ const helpers: TemplateHelper[] = [{
   fn: when,
 }, {
   name: "cardImage",
-  fn: cardImage
+  fn: cardImage,
 }];
 
 export default helpers;

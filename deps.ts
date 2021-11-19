@@ -6,9 +6,11 @@ import * as std from "https://deno.land/std@0.114.0/fs/mod.ts";
 import * as testing from "https://deno.land/std@0.114.0/testing/asserts.ts";
 import * as parsers from "https://deno.land/x/marky@v1.1.6/parsers.ts";
 import { createCanvas } from "https://deno.land/x/canvas@v1.3.0/mod.ts";
-import canvasTxt from 'https://cdn.skypack.dev/canvas-txt';
+import canvasTxt from "https://cdn.skypack.dev/canvas-txt";
 
 export {
+  canvasTxt,
+  createCanvas,
   Handlebars,
   hljs,
   hljsClojure,
@@ -16,6 +18,4 @@ export {
   parsers,
   std,
   testing,
-  createCanvas,
-  canvasTxt
 };
