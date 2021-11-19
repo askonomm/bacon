@@ -2,7 +2,8 @@ import { Handlebars } from "./deps.ts";
 
 export interface TemplateHelper {
   name: string;
-  fn: (input: string, opts?: any) => string;
+  // deno-lint-ignore no-explicit-any
+  fn: (context: any, options?: any) => string;
 }
 
 export interface TemplateLayout {

@@ -170,8 +170,8 @@ function run(): void {
       .replaceAll("/", "_")
       .replace(/\..*/, "");
 
-    const data = {...globalData};
-    
+    const data = { ...globalData };
+
     data[slug] = true;
 
     const html = build(helpers, partials, template, data);

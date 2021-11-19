@@ -124,17 +124,26 @@ export default function content(
 
     // Group by date with modifier "year"
     if (grouper === "date" && modifier === "year") {
-      return groupBy(contentItems, (item) => item.date && item.date.split("-")[0].trim());
+      return groupBy(
+        contentItems,
+        (item) => item.date && item.date.split("-")[0].trim(),
+      );
     }
 
     // Group by date with modifier "month"
     if (grouper === "date" && modifier === "month") {
-      return groupBy(contentItems, (item) => item.date && item.date.split("-")[1].trim());
+      return groupBy(
+        contentItems,
+        (item) => item.date && item.date.split("-")[1].trim(),
+      );
     }
 
     // Group by date with modifier "day"
     if (grouper === "date" && modifier === "day") {
-      return groupBy(contentItems, (item) => item.date && item.date.split("-")[2].trim());
+      return groupBy(
+        contentItems,
+        (item) => item.date && item.date.split("-")[2].trim(),
+      );
     }
 
     // If we're grouping by anything other than date

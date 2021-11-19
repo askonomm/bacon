@@ -67,7 +67,7 @@ function parseMeta(contents: string): ContentItemMeta {
 
 /**
  * Almost an identical clone of Marky's built-in code block, except
- * supports server-side highlighting thanks to Highlight.js. 
+ * supports server-side highlighting thanks to Highlight.js.
  */
 function codeBlock(block: string): string {
   const languageMatch = block.match(/\`\`\`\w+/);
@@ -85,10 +85,10 @@ function codeBlock(block: string): string {
   if (language) {
     // Code highlight
     try {
-      hljs.registerLanguage('clojure', hljsClojure);
+      hljs.registerLanguage("clojure", hljsClojure);
 
       value = hljs.highlight(value, {
-        language
+        language,
       }).value;
     } catch (error) {
       console.log(error);
