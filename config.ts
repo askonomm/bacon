@@ -25,17 +25,17 @@ export interface Configuration {
  * Reads the configuration JSON file and returns it as
  * a consumable object.
  */
-export default function config(): Configuration {
+export default async function config(): Promise<Configuration> {
   const decoder = new TextDecoder("utf-8");
 
   // Do we have a local.babe.json? Because if so, we want to read that instead.
   try {
-    const contents = Deno.readFileSync(baseDir + "/local.babe.json");
+    const contents = await Deno.readFile(baseDir + "/local.babe.json");
 
     return JSON.parse(decoder.decode(contents));
   } catch (_) {
     try {
-      const contents = Deno.readFileSync(baseDir + "/babe.json");
+      const contents = await Deno.readFile(baseDir + "/babe.json");
 
       return JSON.parse(decoder.decode(contents));
     } catch (_) {

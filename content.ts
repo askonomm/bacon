@@ -48,8 +48,8 @@ export function contentFromConfiguration(
 ): DynamicContent {
   const dynamicContent: DynamicContent = {};
 
-  Object.entries(config).forEach(([key, value]) => {
-    dynamicContent[key] = content(value);
+  Object.entries(config).forEach(async ([key, value]) => {
+    dynamicContent[key] = await content(value);
   });
 
   return dynamicContent;
@@ -61,7 +61,7 @@ export function contentFromConfiguration(
  * grouped, thus resulting in an array of just one type of content,
  * which is `ContentItem`.
  */
-export default function content(): ContentItem[];
+export default async function content(): Promise<ContentItem[]>;
 
 /**
  * However, calling `content()` with the config argument can potentially
@@ -70,9 +70,9 @@ export default function content(): ContentItem[];
  * Record containing the item it was grouped by, and it having the value
  * that is an array of `ContentItem`.
  */
-export default function content(
+export default async function content(
   config: DynamicConfigurationItem,
-): ContentItem[] | GroupedContentItems[];
+): Promise<ContentItem[] | GroupedContentItems[]>;
 
 /**
  * Scans and parses content from `baseDir` according to an optional
@@ -80,18 +80,18 @@ export default function content(
  * If no config was provided it will simply scan and parse all of
  * the content in `baseDir`.
  */
-export default function content(
+export default async function content(
   config?: DynamicConfigurationItem,
 ) {
   const scanPath = config && config.from
     ? baseDir + "/" + config.from
     : baseDir;
 
-  const contentFiles = scan(scanPath, [
+  const contentFiles = await scan(scanPath, [
     ignorePatterns.nonMarkdownFiles,
   ]);
 
-  let contentItems = parse(contentFiles);
+  let contentItems = await parse(contentFiles);
 
   // Sort and order
   if (config && config.sortBy) {

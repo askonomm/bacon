@@ -3,11 +3,12 @@ import { Handlebars } from "./deps.ts";
 export interface TemplateHelper {
   name: string;
   // deno-lint-ignore no-explicit-any
-  fn: (context: any, options?: any) => string;
+  fn: (context: any, options?: any) => string | Promise<string>;
 }
 
 export interface TemplateLayout {
   name?: string;
+  relativePath?: string;
   contents: string;
 }
 

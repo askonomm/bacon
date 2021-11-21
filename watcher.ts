@@ -8,15 +8,15 @@ import { testing } from "./deps.ts";
  */
 // TODO: feed to the callback only files that have changed, and make the runner only run those files
 // for performance reasons.
-export default function watch(callback: () => void): void {
-  let files = scan(baseDir);
+export default async function watch(callback: () => Promise<void>) {
+  let files = await scan(baseDir);
 
-  setInterval(() => {
-    const updatedFiles = scan(baseDir);
+  setInterval(async () => {
+    const updatedFiles = await scan(baseDir);
 
     if (!testing.equal(files, updatedFiles)) {
       files = [...updatedFiles];
-      callback();
+      await callback();
     }
   }, 500);
 }

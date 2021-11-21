@@ -1,4 +1,4 @@
-import scan, { ignorePatterns } from "./scanner.ts";
+import scan, { ignorePatterns, ScannedFile } from "./scanner.ts";
 import build, {
   TemplateData,
   TemplateLayout,
@@ -11,7 +11,7 @@ import content, { contentFromConfiguration } from "./content.ts";
 import watch from "./watcher.ts";
 
 // Configuration
-export const baseDir = Deno.cwd();
+export const baseDir = "../bien.ee";
 const partialsDir = baseDir + "/_partials/";
 const layoutsDir = baseDir + "/_layouts/";
 const decoder = new TextDecoder("utf-8");
@@ -20,115 +20,145 @@ const decoder = new TextDecoder("utf-8");
  * Puts all the pieces together to produce the final output
  * that is the static site.
  */
-function run(): void {
+async function run(): Promise<void> {
   console.log("🐷 Thinking ...");
 
   // Compose global data from the configuration JSON.
   // This includes static configuration, as well as dynamic,
   // DSL generated content.
-  const configuration = config();
+  const configuration = await config();
   const globalData = {
     ...configuration.static,
     ...contentFromConfiguration(configuration.dynamic),
   };
 
   // Compose content items
-  const contentItems = content();
+  const contentItems = await content();
 
   // Template files
-  const templates = scan(baseDir, [
+  const templateFiles: ScannedFile[] = await scan(baseDir, [
     ignorePatterns.nonTemplateFiles,
     ignorePatterns.layoutFiles,
     ignorePatterns.partialFiles,
-  ]).map((template) => {
-    const contents = Deno.readFileSync(template.path);
+  ]);
 
-    return {
-      relativePath: template.relativePath,
-      contents: decoder.decode(contents),
-    };
-  });
+  const templates = await Promise.all(
+    templateFiles.map(
+      async (template: ScannedFile): Promise<TemplateLayout> => {
+        const contents = await Deno.readFile(template.path);
+
+        return {
+          relativePath: template.relativePath,
+          contents: decoder.decode(contents),
+        };
+      },
+    ),
+  );
 
   // Construct unique layouts from `contentItems` so that we'd have them done
   // in one go and wouldn't need to get them on each use of `build`.
-  const layouts: TemplateLayout[] = contentItems
+  const layoutNames: string[] = contentItems
     .map((item) => item.layout)
     .filter((item, index, arr) => arr.indexOf(item) === index && item)
-    .concat("default")
-    .map((layout) => {
-      const contents = Deno.readFileSync(layoutsDir + layout + ".hbs");
+    .concat("default");
+
+  const layouts = await Promise.all(
+    layoutNames.map(async (layout): Promise<TemplateLayout> => {
+      const contents = await Deno.readFile(layoutsDir + layout + ".hbs");
 
       return {
         name: String(layout),
         contents: decoder.decode(contents),
       };
-    });
+    }),
+  );
 
   // Find unique partials used in `layouts` and construct them into an array
   // of `TemplatePartial`. This way the user never has to manually register
   // Handlebars partials.
-  let partials: TemplatePartial[] = layouts
+  const partialNames: string[] = layouts
     .flatMap((item) => {
       const matches = item.contents.match(/\{\{\>(.*)\}\}/g);
 
-      return matches?.map((match) => {
-        return match.replace("{{>", "").replace("}}", "").trim();
-      });
+      if (matches) {
+        return matches.map((match) => {
+          return match.replace("{{>", "").replace("}}", "").trim();
+        });
+      }
+
+      return [];
     })
-    .filter((item, index, arr) => arr.indexOf(item) === index && item)
-    .map((partial) => {
-      const contents = Deno.readFileSync(partialsDir + partial + ".hbs");
+    .filter((item, index, arr) => arr.indexOf(item) === index && item);
+
+  let partials: TemplatePartial[] = await Promise.all(
+    partialNames.map(async (partial) => {
+      const contents = await Deno.readFile(partialsDir + partial + ".hbs");
 
       return {
         name: String(partial),
         contents: decoder.decode(contents),
       };
-    });
+    }),
+  );
 
   // Append any partials we find from `templates` that are not yet
   // discovered in the contents of layouts used by content items.
-  const templatePartials: TemplatePartial[] = templates
+  const templatePartialNames: string[] = templates
     .flatMap((item) => {
       const matches = item.contents.match(/\{\{\>(.*)\}\}/g);
 
-      return matches?.map((match) => {
-        return match.replace("{{>", "").replace("}}", "").trim();
-      });
+      if (matches) {
+        return matches.map((match) => {
+          return match.replace("{{>", "").replace("}}", "").trim();
+        });
+      }
+
+      return [];
     })
     .filter((item, index, arr) => arr.indexOf(item) === index && item)
-    .filter((item) => !partials.find((partial) => partial.name === item))
-    .map((partial) => {
-      const contents = Deno.readFileSync(partialsDir + partial + ".hbs");
+    .filter((item) => !partials.find((partial) => partial.name === item));
+
+  const templatePartials: TemplatePartial[] = await Promise.all(
+    templatePartialNames.map(async (partial) => {
+      const contents = await Deno.readFile(partialsDir + partial + ".hbs");
 
       return {
         name: String(partial),
         contents: decoder.decode(contents),
       };
-    });
+    }),
+  );
 
   partials = partials.concat(templatePartials);
 
   // BUT, we're not done yet! That's because partials themselves can
   // also include partials, so let's get all the partials from partials,
   // and add them to partials. Yes, I'm aware of how this sounds.
-  const partialPartials: TemplatePartial[] = partials
+  const partialPartialNames: string[] = partials
     .flatMap((item) => {
       const matches = item.contents.match(/\{\{\>(.*)\}\}/g);
 
-      return matches?.map((match) => {
-        return match.replace("{{>", "").replace("}}", "").trim();
-      });
+      if (matches) {
+        return matches.map((match) => {
+          return match.replace("{{>", "").replace("}}", "").trim();
+        });
+      }
+
+      return [];
     })
     .filter((item, index, arr) => arr.indexOf(item) === index && item)
-    .filter((item) => !partials.find((partial) => partial.name === item))
-    .map((partial) => {
-      const contents = Deno.readFileSync(partialsDir + partial + ".hbs");
+    .filter((item) => !partials.find((partial) => partial.name === item));
+
+  const partialPartials: TemplatePartial[] = await Promise.all(
+    partialPartialNames.map(async (partial) => {
+      const contents = await Deno.readFile(partialsDir + partial + ".hbs");
 
       return {
         name: String(partial),
         contents: decoder.decode(contents),
       };
-    });
+    }),
+  );
 
   partials = partials.concat(partialPartials);
 
@@ -164,28 +194,30 @@ function run(): void {
   //
   // For example, say you have a `feed.xml.hbs` template, well, that will
   // be generated into `feed.xml`. You see the power of it now? Awesome!
-  templates.forEach((template) => {
-    const slug = "is_" + template.relativePath
-      .replace("/", "")
-      .replaceAll("/", "_")
-      .replace(/\..*/, "");
+  templates.forEach(async (template) => {
+    if (template.relativePath) {
+      const slug = "is_" + template.relativePath
+        .replace("/", "")
+        .replaceAll("/", "_")
+        .replace(/\..*/, "");
 
-    const data = { ...globalData };
+      const data = { ...globalData };
 
-    data[slug] = true;
+      data[slug] = true;
 
-    const html = build(helpers, partials, template, data);
+      const html = build(helpers, partials, template, data);
 
-    write(template.relativePath, html);
+      await write(template.relativePath, html);
+    }
   });
 
   // Move all other assets to the public directory.
-  const assets = scan(baseDir, [
+  const assets = await scan(baseDir, [
     ignorePatterns.nonAssetFiles,
   ]);
 
-  assets.forEach((asset) => {
-    Deno.copyFileSync(asset.path, baseDir + "/public" + asset.relativePath);
+  assets.forEach(async (asset) => {
+    await Deno.copyFile(asset.path, baseDir + "/public" + asset.relativePath);
   });
 }
 
@@ -193,9 +225,9 @@ function run(): void {
 // but optionally, we also watch it, and run Babe continuously.
 if (Deno.args.includes("watch")) {
   console.log("🐷 Watching ...");
-  run();
-  watch(run);
+  await run();
+  await watch(run);
 } else {
-  run();
+  await run();
   Deno.exit();
 }

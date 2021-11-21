@@ -34,14 +34,14 @@ function ignorePath(path: string, patterns: RegExp[]): boolean {
  * `ScannedFile` objects. Optionally `ignorePatterns` can be passed,
  * containing regex patterns for file names that should be ignored.
  */
-export default function scan(
+export default async function scan(
   path: string,
   ignores: RegExp[] = defaultIgnorePatterns,
-): ScannedFile[] {
-  const composer = (innerPath: string): ScannedFile[] => {
+): Promise<ScannedFile[]> {
+  const composer = async (innerPath: string): Promise<ScannedFile[]> => {
     const files: ScannedFile[] = [];
 
-    for (const dirEntry of Deno.readDirSync(innerPath)) {
+    for await (const dirEntry of Deno.readDir(innerPath)) {
       const parsedPath = innerPath.endsWith("/")
         ? innerPath.substring(0, innerPath.length - 1)
         : innerPath;
@@ -54,10 +54,10 @@ export default function scan(
       if (dirEntry.isFile && ignorePath(filePath, ignores)) continue;
 
       // Otherwise we're good to continue composing our array.
-      const stat = Deno.statSync(filePath);
+      const stat = await Deno.stat(filePath);
 
       if (dirEntry.isDirectory) {
-        files.push(...composer(filePath));
+        files.push(...await composer(filePath));
       } else {
         files.push({
           path: filePath,
@@ -70,5 +70,5 @@ export default function scan(
     return files;
   };
 
-  return composer(path);
+  return await composer(path);
 }

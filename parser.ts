@@ -176,11 +176,11 @@ function parseEntry(contents: string): string {
  * Takes in an array of ScannedFile's which it then attempts to
  * turn into an array of ContentItem's.
  */
-export default function parse(
+export default async function parse(
   files: ScannedFile[],
-): ContentItem[] {
-  return files.map((file) => {
-    const bytes = Deno.readFileSync(file.path);
+): Promise<ContentItem[]> {
+  return await Promise.all(files.map(async (file): Promise<ContentItem> => {
+    const bytes = await Deno.readFile(file.path);
     const decoder = new TextDecoder("utf-8");
     const contents: string = decoder.decode(bytes);
     const meta = parseMeta(contents);
@@ -197,5 +197,5 @@ export default function parse(
       slug,
       time_to_read: timeToRead,
     };
-  });
+  }));
 }
