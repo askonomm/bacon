@@ -1,9 +1,16 @@
 import { Handlebars } from "./deps.ts";
 
+export interface TemplateOptions {
+  hash: {
+    [key: string]: string;
+  };
+  fn: (opts?: unknown) => string;
+  inverse: () => string;
+}
+
 export interface TemplateHelper {
   name: string;
-  // deno-lint-ignore no-explicit-any
-  fn: (context: any, options?: any) => string | Promise<string>;
+  fn: (context: string | TemplateOptions, options?: TemplateOptions) => string;
 }
 
 export interface TemplateLayout {

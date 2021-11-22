@@ -1,8 +1,13 @@
-import { TemplateHelper } from "./builder.ts";
+import { TemplateHelper, TemplateOptions } from "./builder.ts";
 
-// deno-lint-ignore no-explicit-any
-function formatDate(context: string, data: any): string {
-  if (!context || !context.match(/\d\d\d\d\-\d\d-\d\d/)) {
+function formatDate(
+  context: string | TemplateOptions,
+  data?: TemplateOptions,
+): string {
+  if (
+    !context || typeof context !== "string" || !data ||
+    !context.match(/\d\d\d\d\-\d\d-\d\d/)
+  ) {
     return "{invalid_date_input}";
   }
 
@@ -15,8 +20,8 @@ function formatDate(context: string, data: any): string {
 }
 
 // deno-lint-ignore no-explicit-any
-function date(context: string, options: any): string {
-  if (!context) {
+function date(context: string | TemplateOptions, options?: any): string {
+  if (!context || typeof context !== "string") {
     return "{invalid_date_format}";
   }
 
@@ -29,7 +34,11 @@ function date(context: string, options: any): string {
 }
 
 // deno-lint-ignore no-explicit-any
-function when(this: any, context: any): string {
+function when(this: any, context: string | TemplateOptions): string {
+  if (typeof context === "string") {
+    return "";
+  }
+
   // Equality check
   if (context.hash.is && context.hash.data === context.hash.is) {
     return context.fn(this);
