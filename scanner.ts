@@ -23,7 +23,7 @@ export const defaultIgnorePatterns: RegExp[] = [
 /**
  * Checks if `path` matches any of the given `patterns`.
  */
-function ignorePath(path: string, patterns: RegExp[]): boolean {
+export function ignorePath(path: string, patterns: RegExp[]): boolean {
   return patterns
     .map((pattern) => path.match(pattern))
     .filter((match) => match !== null).length > 0;

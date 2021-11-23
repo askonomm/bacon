@@ -34,6 +34,44 @@ function groupBy<K extends keyof ContentItem>(
   return groupedContentItems;
 }
 
+function groupContent(
+  content: ContentItem[],
+  grouper: string,
+  modifier?: string,
+): GroupedContentItems[] {
+  // Group by date without any modifier
+  if (grouper === "date" && !modifier) {
+    return groupBy(content, (item) => item.date);
+  }
+
+  // Group by date with modifier "year"
+  if (grouper === "date" && modifier === "year") {
+    return groupBy(
+      content,
+      (item) => item.date && item.date.split("-")[0].trim(),
+    );
+  }
+
+  // Group by date with modifier "month"
+  if (grouper === "date" && modifier === "month") {
+    return groupBy(
+      content,
+      (item) => item.date && item.date.split("-")[1].trim(),
+    );
+  }
+
+  // Group by date with modifier "day"
+  if (grouper === "date" && modifier === "day") {
+    return groupBy(
+      content,
+      (item) => item.date && item.date.split("-")[2].trim(),
+    );
+  }
+
+  // If we're grouping by anything other
+  return groupBy(content, (item) => item[grouper]);
+}
+
 export interface DynamicContent {
   [key: string]: ContentItem[] | GroupedContentItems[];
 }
@@ -117,39 +155,7 @@ export default async function content(
     const grouper = config.groupBy.split("|")[0].trim();
     const modifier = config.groupBy.split("|")[1].trim();
 
-    // Group by date without any modifier
-    if (grouper === "date" && !modifier) {
-      return groupBy(contentItems, (item) => item.date);
-    }
-
-    // Group by date with modifier "year"
-    if (grouper === "date" && modifier === "year") {
-      return groupBy(
-        contentItems,
-        (item) => item.date && item.date.split("-")[0].trim(),
-      );
-    }
-
-    // Group by date with modifier "month"
-    if (grouper === "date" && modifier === "month") {
-      return groupBy(
-        contentItems,
-        (item) => item.date && item.date.split("-")[1].trim(),
-      );
-    }
-
-    // Group by date with modifier "day"
-    if (grouper === "date" && modifier === "day") {
-      return groupBy(
-        contentItems,
-        (item) => item.date && item.date.split("-")[2].trim(),
-      );
-    }
-
-    // If we're grouping by anything other than date
-    if (grouper !== "date") {
-      return groupBy(contentItems, (item) => item[grouper]);
-    }
+    return groupContent(contentItems, grouper, modifier);
   }
 
   return contentItems;

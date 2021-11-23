@@ -20,7 +20,7 @@ const decoder = new TextDecoder("utf-8");
  * Puts all the pieces together to produce the final output
  * that is the static site.
  */
-async function run(): Promise<void> {
+export default async function run(): Promise<void> {
   console.log("🐷 Thinking ...");
 
   // Compose global data from the configuration JSON.
@@ -224,9 +224,8 @@ async function run(): Promise<void> {
 // We always run Babe whenever Babe is executed,
 // but optionally, we also watch it, and run Babe continuously.
 if (Deno.args.includes("watch")) {
-  console.log("🐷 Watching ...");
   await run();
-  await watch(run);
+  await watch();
 } else {
   await run();
   Deno.exit();

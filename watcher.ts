@@ -1,6 +1,5 @@
-import { baseDir } from "./main.ts";
-import scan from "./scanner.ts";
-import { testing } from "./deps.ts";
+import run, { baseDir } from "./main.ts";
+import { ignorePath, ignorePatterns } from "./scanner.ts";
 
 /**
  * Runs a watcher every 500ms to check if the scan returns a different
@@ -8,15 +7,24 @@ import { testing } from "./deps.ts";
  */
 // TODO: feed to the callback only files that have changed, and make the runner only run those files
 // for performance reasons.
-export default async function watch(callback: () => Promise<void>) {
-  let files = await scan(baseDir);
+export default async function watch() {
+  console.log("🐷 Watching ...");
 
-  setInterval(async () => {
-    const updatedFiles = await scan(baseDir);
+  let changeOccured = false;
 
-    if (!testing.equal(files, updatedFiles)) {
-      files = [...updatedFiles];
-      await callback();
+  for await (const event of Deno.watchFs(baseDir)) {
+    const change = event.paths.filter((path) =>
+      !ignorePath(path, [ignorePatterns.dotFiles, ignorePatterns.publicFiles])
+    ).length > 0;
+
+    if (change && !changeOccured) {
+      await run();
+      changeOccured = true;
+
+      setTimeout(() => {
+        changeOccured = false;
+        console.log("🐷 Watching ...");
+      }, 250);
     }
-  }, 500);
+  }
 }
