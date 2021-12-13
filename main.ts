@@ -12,7 +12,7 @@ import content, { contentFromConfiguration } from "./content.ts";
 import watch from "./watcher.ts";
 
 // Configuration
-export const baseDir = "../bien.ee";
+export const baseDir = Deno.cwd();
 const partialsDir = baseDir + "/_partials/";
 const layoutsDir = baseDir + "/_layouts/";
 const decoder = new TextDecoder("utf-8");
