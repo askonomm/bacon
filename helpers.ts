@@ -1,4 +1,4 @@
-import { TemplateHelper, TemplateOptions } from "./builder.ts";
+import { TemplateHelper, TemplateOptions } from "./template.ts";
 
 function formatDate(
   context: string | TemplateOptions,
