@@ -2,7 +2,7 @@ import run, { baseDir } from "./main.ts";
 import { ignorePath, ignorePatterns } from "./scanner.ts";
 
 /**
- * Runs a watcher every 500ms to check if the scan returns a different
+ * Runs a watcher every 250ms to check if the scan returns a different
  * result, because if it does, we want to call `callback`.
  */
 // TODO: feed to the callback only files that have changed, and make the runner only run those files

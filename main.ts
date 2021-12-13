@@ -1,9 +1,10 @@
 import scan, { ignorePatterns, ScannedFile } from "./scanner.ts";
-import build, {
+import {
+  buildHTML,
   TemplateData,
   TemplateLayout,
   TemplatePartial,
-} from "./builder.ts";
+} from "./template.ts";
 import write from "./writer.ts";
 import helpers from "./helpers.ts";
 import config from "./config.ts";
@@ -11,7 +12,7 @@ import content, { contentFromConfiguration } from "./content.ts";
 import watch from "./watcher.ts";
 
 // Configuration
-export const baseDir = "../bien.ee";
+export const baseDir = Deno.cwd();
 const partialsDir = baseDir + "/_partials/";
 const layoutsDir = baseDir + "/_layouts/";
 const decoder = new TextDecoder("utf-8");
@@ -178,7 +179,7 @@ export default async function run(): Promise<void> {
 
     data[slug] = true;
 
-    const html = build(helpers, partials, layout, {
+    const html = buildHTML(helpers, partials, layout, {
       ...data,
       ...globalData,
     });
@@ -205,7 +206,7 @@ export default async function run(): Promise<void> {
 
       data[slug] = true;
 
-      const html = build(helpers, partials, template, data);
+      const html = buildHTML(helpers, partials, template, data);
 
       await write(template.relativePath, html);
     }

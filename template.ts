@@ -33,7 +33,7 @@ export interface TemplateData {
  * `helpers`, `partials`, and a `layout`, fusing it all together with
  * the given `data`.
  */
-export default function build(
+export function buildHTML(
   helpers: TemplateHelper[],
   partials: TemplatePartial[],
   layout?: TemplateLayout,
