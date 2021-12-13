@@ -12,7 +12,7 @@ import content, { contentFromConfiguration } from "./content.ts";
 import watch from "./watcher.ts";
 
 // Configuration
-export const baseDir = Deno.cwd();
+export const baseDir = "../bien.ee";
 const partialsDir = baseDir + "/_partials/";
 const layoutsDir = baseDir + "/_layouts/";
 const decoder = new TextDecoder("utf-8");
@@ -30,8 +30,10 @@ export default async function run(): Promise<void> {
   const configuration = await config();
   const globalData = {
     ...configuration.static,
-    ...contentFromConfiguration(configuration.dynamic),
+    ...await contentFromConfiguration(configuration.dynamic),
   };
+
+  console.log('global', globalData);
 
   // Compose content items
   const contentItems = await content();
@@ -203,6 +205,8 @@ export default async function run(): Promise<void> {
         .replace(/\..*/, "");
 
       const data = { ...globalData };
+
+      console.log(data);
 
       data[slug] = true;
 

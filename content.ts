@@ -81,14 +81,16 @@ export interface DynamicContent {
  * `config`, which is a collection of DSL's for constructing
  * dynamic data.
  */
-export function contentFromConfiguration(
+export async function contentFromConfiguration(
   config: DynamicConfiguration,
-): DynamicContent {
+): Promise<DynamicContent> {
   const dynamicContent: DynamicContent = {};
 
-  Object.entries(config).forEach(async ([key, value]) => {
-    dynamicContent[key] = await content(value);
-  });
+  await Promise.all(Object.entries(config).map(
+    async ([key, val]) => {
+      dynamicContent[key] = await content(val);
+    }
+  ));
 
   return dynamicContent;
 }
