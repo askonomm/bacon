@@ -21,13 +21,13 @@ const {
   strikethrough,
 } = parsers;
 
-export interface ContentItemMeta {
+export type ContentItemMeta = {
   [key: string]: string;
-}
+};
 
-export interface ContentItem extends ScannedFile {
+export type ContentItem = ScannedFile & {
   [key: string]: string;
-}
+};
 
 /**
  * Takes in a presumable Markdown file contents with YAML meta-data that
@@ -36,7 +36,7 @@ export interface ContentItem extends ScannedFile {
  * Dates are converted into actual Date objects and boolean strings are
  * converted into actual booleans.
  */
-function parseMeta(contents: string): ContentItemMeta {
+export function parseMeta(contents: string): ContentItemMeta {
   // Match contents for the YAML meta-data block
   const metaData = contents.match(/^\-\-\-(.*?)\-\-\-/s);
 
@@ -176,26 +176,26 @@ function parseEntry(contents: string): string {
  * Takes in an array of ScannedFile's which it then attempts to
  * turn into an array of ContentItem's.
  */
-export default async function parse(
-  files: ScannedFile[],
-): Promise<ContentItem[]> {
-  return await Promise.all(files.map(async (file): Promise<ContentItem> => {
-    const bytes = await Deno.readFile(file.path);
-    const decoder = new TextDecoder("utf-8");
-    const contents: string = decoder.decode(bytes);
-    const meta = parseMeta(contents);
-    const entry = parseEntry(contents);
-    const slugPieces = file.relativePath.split("/");
-    const slug = slugPieces[slugPieces.length - 1].replace(".md", "");
-    const timeToRead = Math.ceil(entry.trim().split(/\s+/).length / 225)
-      .toString();
+export async function parse(files: ScannedFile[]): Promise<ContentItem[]> {
+  return await Promise.all(
+    files.map(async (file): Promise<ContentItem> => {
+      const bytes = await Deno.readFile(file.path);
+      const decoder = new TextDecoder("utf-8");
+      const contents: string = decoder.decode(bytes);
+      const meta = parseMeta(contents);
+      const entry = parseEntry(contents);
+      const slugPieces = file.relativePath.split("/");
+      const slug = slugPieces[slugPieces.length - 1].replace(".md", "");
+      const timeToRead = Math.ceil(entry.trim().split(/\s+/).length / 225)
+        .toString();
 
-    return {
-      ...file,
-      ...meta,
-      entry,
-      slug,
-      time_to_read: timeToRead,
-    };
-  }));
+      return {
+        ...file,
+        ...meta,
+        entry,
+        slug,
+        time_to_read: timeToRead,
+      };
+    }),
+  );
 }

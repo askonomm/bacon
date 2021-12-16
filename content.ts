@@ -1,53 +1,58 @@
-import parse, { ContentItem } from "./parser.ts";
+import { ContentItem, parse } from "./parser.ts";
 import scan, { ignorePatterns } from "./scanner.ts";
 import { DynamicConfiguration, DynamicConfigurationItem } from "./config.ts";
 import { baseDir } from "./main.ts";
 
-export interface GroupedContentItems {
+export type GroupedContentItems = {
   group: string;
   items: ContentItem[];
-}
+};
 
-function groupBy<K extends keyof ContentItem>(
-  array: ContentItem[],
-  key: K | { (obj: ContentItem): string },
+/**
+ * Given an input of `items` and a grouping value by `grouper`, will
+ * group the `items` by the `grouper` in an array of objects defined
+ * as `GroupedContentItems`.
+ */
+function groupBy(
+  items: ContentItem[],
+  grouper: { (item: ContentItem): string },
 ): GroupedContentItems[] {
-  const keyFn = key instanceof Function ? key : (obj: ContentItem) => obj[key];
+  const keyFn = grouper instanceof Function
+    ? grouper
+    : (item: ContentItem) => item[grouper];
 
-  const grouped = array.reduce((objectsByKeyValue, obj) => {
+  const grouped = items.reduce((objkv, obj) => {
     const value = keyFn(obj);
-
-    objectsByKeyValue[value] = (objectsByKeyValue[value] || []).concat(obj);
-
-    return objectsByKeyValue;
+    objkv[value] = (objkv[value] || []).concat(obj);
+    return objkv;
   }, {} as Record<string, ContentItem[]>);
 
-  const groupedContentItems: GroupedContentItems[] = [];
-
-  Object.entries(grouped).forEach(([key, value]) => {
-    groupedContentItems.push({
+  return Object.entries(grouped).map(([key, value]) => {
+    return {
       group: key,
       items: value,
-    });
+    };
   });
-
-  return groupedContentItems;
 }
 
+/**
+ * Groups given `items` with by a `grouper` and an optional
+ * `modifier`.
+ */
 function groupContent(
-  content: ContentItem[],
+  items: ContentItem[],
   grouper: string,
   modifier?: string,
 ): GroupedContentItems[] {
   // Group by date without any modifier
   if (grouper === "date" && !modifier) {
-    return groupBy(content, (item) => item.date);
+    return groupBy(items, (item) => item.date);
   }
 
   // Group by date with modifier "year"
   if (grouper === "date" && modifier === "year") {
     return groupBy(
-      content,
+      items,
       (item) => item.date && item.date.split("-")[0].trim(),
     );
   }
@@ -55,7 +60,7 @@ function groupContent(
   // Group by date with modifier "month"
   if (grouper === "date" && modifier === "month") {
     return groupBy(
-      content,
+      items,
       (item) => item.date && item.date.split("-")[1].trim(),
     );
   }
@@ -63,36 +68,27 @@ function groupContent(
   // Group by date with modifier "day"
   if (grouper === "date" && modifier === "day") {
     return groupBy(
-      content,
+      items,
       (item) => item.date && item.date.split("-")[2].trim(),
     );
   }
 
   // If we're grouping by anything other
-  return groupBy(content, (item) => item[grouper]);
+  return groupBy(items, (item) => item[grouper]);
 }
 
-export interface DynamicContent {
+export type DynamicContent = {
   [key: string]: ContentItem[] | GroupedContentItems[];
-}
+};
 
 /**
- * Scans and parses content from `baseDir` according to given
- * `config`, which is a collection of DSL's for constructing
- * dynamic data.
+ * Type guard for checking if given `test` is of type
+ * `DynamicConfiguration`.
  */
-export async function contentFromConfiguration(
-  config: DynamicConfiguration,
-): Promise<DynamicContent> {
-  const dynamicContent: DynamicContent = {};
-
-  await Promise.all(Object.entries(config).map(
-    async ([key, val]) => {
-      dynamicContent[key] = await content(val);
-    }
-  ));
-
-  return dynamicContent;
+function isDynamicConfiguration(
+  test: DynamicConfiguration | DynamicConfigurationItem,
+): test is DynamicConfiguration {
+  return test.from === undefined;
 }
 
 /**
@@ -101,7 +97,7 @@ export async function contentFromConfiguration(
  * grouped, thus resulting in an array of just one type of content,
  * which is `ContentItem`.
  */
-export default async function content(): Promise<ContentItem[]>;
+export async function getContent(): Promise<ContentItem[]>;
 
 /**
  * However, calling `content()` with the config argument can potentially
@@ -110,9 +106,9 @@ export default async function content(): Promise<ContentItem[]>;
  * Record containing the item it was grouped by, and it having the value
  * that is an array of `ContentItem`.
  */
-export default async function content(
-  config: DynamicConfigurationItem,
-): Promise<ContentItem[] | GroupedContentItems[]>;
+export async function getContent(
+  config: DynamicConfiguration | DynamicConfigurationItem,
+): Promise<ContentItem[] | GroupedContentItems[] | DynamicContent>;
 
 /**
  * Scans and parses content from `baseDir` according to an optional
@@ -120,9 +116,29 @@ export default async function content(
  * If no config was provided it will simply scan and parse all of
  * the content in `baseDir`.
  */
-export default async function content(
-  config?: DynamicConfigurationItem,
+export async function getContent(
+  config?: DynamicConfigurationItem | DynamicConfiguration,
 ) {
+  // If the `config` is of type DynamicConfiguration we want to construct
+  // the content into a `DynamicContent` object.
+  if (config && isDynamicConfiguration(config)) {
+    const dynamicContent: DynamicContent = {};
+
+    await Promise.all(
+      Object.entries(config).map(
+        async ([key, val]) => {
+          dynamicContent[key] = await getContent(val) as
+            | ContentItem[]
+            | GroupedContentItems[];
+        },
+      ),
+    );
+
+    return dynamicContent;
+  }
+
+  // Otherwise we might have a `DynamicConfigurationItem` as `config`
+  // or we might not, either way, the following will deal with that.
   const scanPath = config && config.from
     ? baseDir + "/" + config.from
     : baseDir;

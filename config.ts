@@ -1,48 +1,82 @@
 import { baseDir } from "./main.ts";
 
-export interface StaticConfiguration {
+export type StaticConfiguration = {
   [key: string]: string | boolean | StaticConfiguration;
-}
+};
 
-export interface DynamicConfigurationItem {
+export type DynamicConfigurationItem = {
   from: string;
   sortBy?: string;
   order?: "asc" | "desc";
   groupBy?: string;
   limit?: number;
-}
+};
 
-export interface DynamicConfiguration {
+export type DynamicConfiguration = {
   [key: string]: DynamicConfigurationItem;
-}
+};
 
-export interface Configuration {
+export type Configuration = {
   static: StaticConfiguration;
   dynamic: DynamicConfiguration;
-}
+};
 
 /**
- * Reads the configuration JSON file and returns it as
- * a consumable object.
+ * The `Config` class is responsible for reading the contents
+ * of the configuration file on disk named either `babe.json` or
+ * `babe.local.json`. If the file with the local suffix is present,
+ * that will be loaded instead, to ease the pain of local development.
  */
-export default async function config(): Promise<Configuration> {
-  const decoder = new TextDecoder("utf-8");
+export default class Config {
+  config;
 
-  // Do we have a local.babe.json? Because if so, we want to read that instead.
-  try {
-    const contents = await Deno.readFile(baseDir + "/local.babe.json");
+  constructor() {
+    const decoder = new TextDecoder("utf-8");
 
-    return JSON.parse(decoder.decode(contents));
-  } catch (_) {
     try {
-      const contents = await Deno.readFile(baseDir + "/babe.json");
+      const contents = Deno.readFileSync(baseDir + "/local.babe.json");
 
-      return JSON.parse(decoder.decode(contents));
+      this.config = JSON.parse(decoder.decode(contents));
     } catch (_) {
-      return {
-        static: {},
-        dynamic: {},
-      };
+      try {
+        const contents = Deno.readFileSync(baseDir + "/babe.json");
+
+        this.config = JSON.parse(decoder.decode(contents));
+      } catch (_) {
+        this.config = {
+          static: {},
+          dynamic: {},
+        };
+      }
     }
+  }
+
+  /**
+   * When the config is specified as static, we want to return
+   * a `StaticConfiguration` type.
+   */
+  get(config: "static"): StaticConfiguration;
+
+  /**
+   * When the config is specified as dynamic, we want to return
+   * a `DynamicConfiguration` type.
+   */
+  get(config: "dynamic"): DynamicConfiguration;
+
+  /**
+   * Depending on input returns either a `StaticConfiguration`,
+   * `DynamicConfiguraton` or simply both of those as `Configuration` if
+   * a specific `config` was not provided.
+   */
+  get(config?: "static" | "dynamic") {
+    if (config === "static") {
+      return this.config.static;
+    }
+
+    if (config === "dynamic") {
+      return this.config.dynamic;
+    }
+
+    return this.config;
   }
 }

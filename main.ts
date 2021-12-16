@@ -1,172 +1,104 @@
-import scan, { ignorePatterns, ScannedFile } from "./scanner.ts";
-import {
-  buildHTML,
-  TemplateData,
-  TemplateLayout,
-  TemplatePartial,
-} from "./template.ts";
-import write from "./writer.ts";
-import helpers from "./helpers.ts";
-import config from "./config.ts";
-import content, { contentFromConfiguration } from "./content.ts";
-import watch from "./watcher.ts";
+import { env } from "./deps.ts";
+import scan, { ignorePath, ignorePatterns, ScannedFile } from "./scanner.ts";
+import Template, { TemplateData, TemplateLayout } from "./template.ts";
+import { getContent } from "./content.ts";
+import Config from "./config.ts";
 
 // Configuration
-export const baseDir = Deno.cwd();
-const partialsDir = baseDir + "/_partials/";
+export const baseDir = env().BASE_DIR || Deno.cwd();
+export const partialsDir = baseDir + "/_partials/";
 const layoutsDir = baseDir + "/_layouts/";
-const decoder = new TextDecoder("utf-8");
 
 /**
  * Puts all the pieces together to produce the final output
  * that is the static site.
  */
-export default async function run(): Promise<void> {
+async function run(): Promise<void> {
   console.log("🐷 Thinking ...");
 
-  // Compose global data from the configuration JSON.
+  // Init Template.
+  const template = new Template();
+
+  // Init Config.
+  const config = new Config();
+
+  // Compose global data from the configuration.
   // This includes static configuration, as well as dynamic,
   // DSL generated content.
-  const configuration = await config();
   const globalData = {
-    ...configuration.static,
-    ...await contentFromConfiguration(configuration.dynamic),
+    ...config.get("static"),
+    ...await getContent(config.get("dynamic")),
   };
 
-  console.log('global', globalData);
+  // Compose content items.
+  const contentItems = await getContent();
 
-  // Compose content items
-  const contentItems = await content();
-
-  // Template files
+  // Get template files
   const templateFiles: ScannedFile[] = await scan(baseDir, [
     ignorePatterns.nonTemplateFiles,
     ignorePatterns.layoutFiles,
     ignorePatterns.partialFiles,
   ]);
 
+  // Create an array of `TemplateLayout`'s that are custom pages.
+  // These are different from layouts used within Markdown files in 
+  // that they allow you to create dynamic pages based on the content
+  // available via static configuration or built via the dynamic DSL.
   const templates = await Promise.all(
     templateFiles.map(
       async (template: ScannedFile): Promise<TemplateLayout> => {
-        const contents = await Deno.readFile(template.path);
+        const bytes = await Deno.readFile(template.path);
+        const decoder = new TextDecoder("utf-8");
+        const contents = decoder.decode(bytes);
 
         return {
           relativePath: template.relativePath,
-          contents: decoder.decode(contents),
+          contents,
         };
       },
     ),
   );
 
-  // Construct unique layouts from `contentItems` so that we'd have them done
-  // in one go and wouldn't need to get them on each use of `build`.
+  // Construct colelction unique layout names from `contentItems`,
+  // so that we'd have them done in one go and wouldn't need to get 
+  // them on each use of iteration of a content item build.
   const layoutNames: string[] = contentItems
     .map((item) => item.layout)
     .filter((item, index, arr) => arr.indexOf(item) === index && item)
     .concat("default");
 
+  // Create partials used in template files.
+  await Promise.all(
+    templateFiles.map(async (item) =>
+      await template.setPartialsFrom(item.path)
+    ),
+  );
+
+  // Create partials used in layouts.
+  await Promise.all(
+    layoutNames.map(async (item) =>
+      await template.setPartialsFrom(layoutsDir + item + ".hbs")
+    ),
+  );
+
+  // Create an array of `TemplateLayout`'s that are the layouts used
+  // by the Markdown content items.
   const layouts = await Promise.all(
     layoutNames.map(async (layout): Promise<TemplateLayout> => {
-      const contents = await Deno.readFile(layoutsDir + layout + ".hbs");
+      const bytes = await Deno.readFile(layoutsDir + layout + ".hbs");
+      const decoder = new TextDecoder("utf-8");
+      const contents = decoder.decode(bytes);
 
       return {
         name: String(layout),
-        contents: decoder.decode(contents),
+        contents,
       };
     }),
   );
-
-  // Find unique partials used in `layouts` and construct them into an array
-  // of `TemplatePartial`. This way the user never has to manually register
-  // Handlebars partials.
-  const partialNames: string[] = layouts
-    .flatMap((item) => {
-      const matches = item.contents.match(/\{\{\>(.*)\}\}/g);
-
-      if (matches) {
-        return matches.map((match) => {
-          return match.replace("{{>", "").replace("}}", "").trim();
-        });
-      }
-
-      return [];
-    })
-    .filter((item, index, arr) => arr.indexOf(item) === index && item);
-
-  let partials: TemplatePartial[] = await Promise.all(
-    partialNames.map(async (partial) => {
-      const contents = await Deno.readFile(partialsDir + partial + ".hbs");
-
-      return {
-        name: String(partial),
-        contents: decoder.decode(contents),
-      };
-    }),
-  );
-
-  // Append any partials we find from `templates` that are not yet
-  // discovered in the contents of layouts used by content items.
-  const templatePartialNames: string[] = templates
-    .flatMap((item) => {
-      const matches = item.contents.match(/\{\{\>(.*)\}\}/g);
-
-      if (matches) {
-        return matches.map((match) => {
-          return match.replace("{{>", "").replace("}}", "").trim();
-        });
-      }
-
-      return [];
-    })
-    .filter((item, index, arr) => arr.indexOf(item) === index && item)
-    .filter((item) => !partials.find((partial) => partial.name === item));
-
-  const templatePartials: TemplatePartial[] = await Promise.all(
-    templatePartialNames.map(async (partial) => {
-      const contents = await Deno.readFile(partialsDir + partial + ".hbs");
-
-      return {
-        name: String(partial),
-        contents: decoder.decode(contents),
-      };
-    }),
-  );
-
-  partials = partials.concat(templatePartials);
-
-  // BUT, we're not done yet! That's because partials themselves can
-  // also include partials, so let's get all the partials from partials,
-  // and add them to partials. Yes, I'm aware of how this sounds.
-  const partialPartialNames: string[] = partials
-    .flatMap((item) => {
-      const matches = item.contents.match(/\{\{\>(.*)\}\}/g);
-
-      if (matches) {
-        return matches.map((match) => {
-          return match.replace("{{>", "").replace("}}", "").trim();
-        });
-      }
-
-      return [];
-    })
-    .filter((item, index, arr) => arr.indexOf(item) === index && item)
-    .filter((item) => !partials.find((partial) => partial.name === item));
-
-  const partialPartials: TemplatePartial[] = await Promise.all(
-    partialPartialNames.map(async (partial) => {
-      const contents = await Deno.readFile(partialsDir + partial + ".hbs");
-
-      return {
-        name: String(partial),
-        contents: decoder.decode(contents),
-      };
-    }),
-  );
-
-  partials = partials.concat(partialPartials);
 
   // Now that we have the content, layouts and partials, we can go ahead
-  // and build our final HTML for each of the content items.
+  // and build our final HTML for each of the content items and write the 
+  // result of that to disk.
   contentItems.forEach((item) => {
     const data: TemplateData = item;
 
@@ -179,14 +111,13 @@ export default async function run(): Promise<void> {
       .replaceAll("/", "_")
       .replace(/\..*/, "");
 
-    data[slug] = true;
-
-    const html = buildHTML(helpers, partials, layout, {
+    const html = template.html(layout, {
       ...data,
       ...globalData,
+      [slug]: true,
     });
 
-    write(item.relativePath, html);
+    template.write(item.relativePath, html);
   });
 
   // Babe isn't just a Markdown to HTML site generator, it can also
@@ -197,26 +128,21 @@ export default async function run(): Promise<void> {
   //
   // For example, say you have a `feed.xml.hbs` template, well, that will
   // be generated into `feed.xml`. You see the power of it now? Awesome!
-  templates.forEach(async (template) => {
-    if (template.relativePath) {
-      const slug = "is_" + template.relativePath
+  templates.forEach(async (item) => {
+    if (item.relativePath) {
+      const slug = "is_" + item.relativePath
         .replace("/", "")
         .replaceAll("/", "_")
         .replace(/\..*/, "");
 
-      const data = { ...globalData };
+      const data = { ...globalData, [slug]: true };
+      const html = template.html(item, data);
 
-      console.log(data);
-
-      data[slug] = true;
-
-      const html = buildHTML(helpers, partials, template, data);
-
-      await write(template.relativePath, html);
+      await template.write(item.relativePath, html);
     }
   });
 
-  // Move all other assets to the public directory.
+  // Move all assets to the public directory.
   const assets = await scan(baseDir, [
     ignorePatterns.nonAssetFiles,
   ]);
@@ -224,6 +150,28 @@ export default async function run(): Promise<void> {
   assets.forEach(async (asset) => {
     await Deno.copyFile(asset.path, baseDir + "/public" + asset.relativePath);
   });
+}
+
+async function watch() {
+  console.log("🐷 Watching ...");
+
+  let changeOccured = false;
+
+  for await (const event of Deno.watchFs(baseDir)) {
+    const change = event.paths.filter((path) =>
+      !ignorePath(path, [ignorePatterns.dotFiles, ignorePatterns.publicFiles])
+    ).length > 0;
+
+    if (change && !changeOccured) {
+      await run();
+      changeOccured = true;
+
+      setTimeout(() => {
+        changeOccured = false;
+        console.log("🐷 Watching ...");
+      }, 250);
+    }
+  }
 }
 
 // We always run Babe whenever Babe is executed,

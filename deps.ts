@@ -5,5 +5,6 @@ import hljsClojure from "https://unpkg.com/@highlightjs/cdn-assets@11.3.1/es/lan
 import * as std from "https://deno.land/std@0.114.0/fs/mod.ts";
 import * as testing from "https://deno.land/std@0.114.0/testing/asserts.ts";
 import * as parsers from "https://deno.land/x/marky@v1.1.6/parsers.ts";
+import { config as env } from "https://deno.land/x/dotenv/mod.ts";
 
-export { Handlebars, hljs, hljsClojure, marky, parsers, std, testing };
+export { env, Handlebars, hljs, hljsClojure, marky, parsers, std, testing };

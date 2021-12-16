@@ -1,8 +1,8 @@
-export interface ScannedFile {
+export type ScannedFile = {
   path: string;
   relativePath: string;
   modifiedAt: string;
-}
+};
 
 // Ready-made patterns for usage.
 export const ignorePatterns = {
